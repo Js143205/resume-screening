@@ -1,21 +1,25 @@
-# Intelligent Resume Screening System
+Project: Intelligent Resume Ranking System
 
-## 🚀 Overview
-This project ranks resumes based on job description using NLP techniques.
+Tech Stack:
+- Spring Boot (Java Backend)
+- MySQL Database
+- Python Microservice (for NLP + Apache Tika)
+- REST APIs
 
-## 🛠 Tech Stack
-- Java (Spring Boot)
-- MySQL
-- Python (NLP)
-- Apache Tika
-
-## ⚙️ Features
+Goal:
 - Upload resumes (PDF/DOC)
 - Extract text using Apache Tika
-- Analyze skills using Python
-- Rank resumes based on job description
+- Process text using Python (skills extraction)
+- Compare with Job Description
+- Rank resumes based on similarity score
 
-## 🔮 Future Improvements
-- Use TF-IDF / Cosine Similarity
-- Add machine learning ranking
-- Improve UI
+Key Features:
+- Resume parsing
+- Skill extraction
+- Ranking algorithm
+- REST API integration between Java and Python
+
+Important:
+- Follow clean architecture
+- Keep microservices separate
+- Use REST APIs for communication
