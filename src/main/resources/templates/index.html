@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Resume Screening</title>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background-color: #f4f4f4;
+        }
+        form {
+            background: white;
+            padding: 20px;
+            margin: auto;
+            width: 300px;
+            border-radius: 10px;
+        }
+        button {
+            padding: 10px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Resume Screening System</h2>
+
+<form action="/analyze" method="post" enctype="multipart/form-data">
+
+    <label>Upload Resume 1</label><br>
+    <input type="file" name="file1"><br><br>
+
+    <label>Upload Resume 2</label><br>
+    <input type="file" name="file2"><br><br>
+
+    <label>Job Description</label><br>
+    <textarea name="jobDesc" rows="4"></textarea><br><br>
+
+    <button type="submit">Analyze</button>
+
+</form>
+
+</body>
+</html>
