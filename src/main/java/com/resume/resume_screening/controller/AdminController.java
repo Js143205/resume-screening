@@ -21,7 +21,10 @@ public class AdminController {
     @GetMapping("/admin")
     public String adminDashboard(Model model) {
         AdminDashboardService.AdminDashboardData dashboardData = adminDashboardService.getDashboardData();
+        model.addAttribute("activePage", "admin");
         model.addAttribute("dashboard", dashboardData);
+        model.addAttribute("analytics", dashboardData);
+        model.addAttribute("resultApiBasePath", "/admin/result");
         return "admin";
     }
 

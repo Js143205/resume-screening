@@ -9,9 +9,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class LoginController {
 
     private final SignupService signupService;
+    private final PasswordResetService passwordResetService;
 
-    public LoginController(SignupService signupService) {
+    public LoginController(SignupService signupService, PasswordResetService passwordResetService) {
         this.signupService = signupService;
+        this.passwordResetService = passwordResetService;
     }
 
     @GetMapping("/login")
@@ -24,6 +26,11 @@ public class LoginController {
         return "signup";
     }
 
+    @GetMapping("/forgot-password")
+    public String forgotPassword() {
+        return "forgot-password";
+    }
+
     @PostMapping("/signup")
     public String signupPost(@RequestParam String username, @RequestParam String password) {
         try {
@@ -31,6 +38,20 @@ public class LoginController {
             return "redirect:/login?signup";
         } catch (IllegalStateException e) {
             return "redirect:/signup?error=" + urlEncode(e.getMessage());
+        }
+    }
+
+    @PostMapping("/forgot-password")
+    public String forgotPasswordPost(
+            @RequestParam("identifier") String identifier,
+            @RequestParam("newPassword") String newPassword,
+            @RequestParam("confirmPassword") String confirmPassword
+    ) {
+        try {
+            passwordResetService.resetPassword(identifier, newPassword, confirmPassword);
+            return "redirect:/login?resetSuccess";
+        } catch (IllegalStateException e) {
+            return "redirect:/forgot-password?error=" + urlEncode(e.getMessage());
         }
     }
 

@@ -1,0 +1,489 @@
+<!-- Reusable analytics fragments for Admin and Recruiter dashboards -->
+<!-- Uses 'analytics' model attribute for data -->
+
+<th:block th:fragment="metrics">
+    <section class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="section-label">Total Resumes</div>
+                <div class="metric-value" th:text="${analytics.totalResumes}">0</div>
+                <div class="text-secondary mt-2">Parsed resume records stored in the database.</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="section-label">Total Jobs</div>
+                <div class="metric-value" th:text="${analytics.totalJobs}">0</div>
+                <div class="text-secondary mt-2">Job descriptions submitted for screening.</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="section-label">Average Score</div>
+                <div class="metric-value" th:text="${#numbers.formatDecimal(analytics.averageScore, 1, 1)} + '%'"></div>
+                <div class="text-secondary mt-2">Average ranking score across saved results.</div>
+            </div>
+        </div>
+    </section>
+</th:block>
+
+<th:block th:fragment="charts">
+    <section class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <div class="section-label">Visual Analytics</div>
+                <h2 class="h4 mb-3">Top Skills</h2>
+                <div class="chart-wrap" th:if="${!#lists.isEmpty(analytics.topMatchedSkills)}">
+                    <canvas id="topSkillsChart"></canvas>
+                </div>
+                <div th:if="${#lists.isEmpty(analytics.topMatchedSkills)}" class="text-secondary">
+                    No skill data available for charting yet.
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <div class="section-label">Visual Analytics</div>
+                <h2 class="h4 mb-3">Score Distribution</h2>
+                <div class="chart-wrap"
+                     th:if="${analytics.scoreDistribution.range0To40 + analytics.scoreDistribution.range40To60 + analytics.scoreDistribution.range60To80 + analytics.scoreDistribution.range80To100 > 0}">
+                    <canvas id="scoreDistributionChart"></canvas>
+                </div>
+                <div th:if="${analytics.scoreDistribution.range0To40 + analytics.scoreDistribution.range40To60 + analytics.scoreDistribution.range60To80 + analytics.scoreDistribution.range80To100 == 0}"
+                     class="text-secondary">
+                    No ranking scores available for charting yet.
+                </div>
+            </div>
+        </div>
+    </section>
+</th:block>
+
+<th:block th:fragment="recentResultsAndSkills">
+    <section class="row g-4">
+        <div class="col-xl-8">
+            <div class="glass-card panel-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <div class="section-label">Recent Activity</div>
+                        <h2 class="h4 mb-0">Recent Ranking Results</h2>
+                    </div>
+                </div>
+                <div class="table-shell">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>Job Title</th>
+                            <th>Resume</th>
+                            <th>Score</th>
+                            <th>Date</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="resultsTableBody" th:attr="data-result-api-base-path=${resultApiBasePath}">
+                        <tr th:if="${#lists.isEmpty(analytics.recentRankings)}">
+                            <td colspan="5" class="text-center text-secondary py-4">No ranking results available yet.</td>
+                        </tr>
+                        <tr th:each="ranking : ${analytics.recentRankings}" th:attr="data-result-id=${ranking.id}">
+                            <td th:text="${ranking.jobTitle}">Java Backend Engineer</td>
+                            <td th:text="${ranking.resumeFileName}">resume.pdf</td>
+                            <td>
+                                <span class="fw-bold" th:text="${ranking.score} + '%'">82%</span>
+                            </td>
+                            <td th:text="${ranking.createdAt != null ? #temporals.format(ranking.createdAt, 'dd MMM yyyy, hh:mm a') : '-'}">16 Apr 2026, 10:30 AM</td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button type="button"
+                                            class="btn btn-outline-primary btn-sm result-details-btn"
+                                            th:attr="data-result-id=${ranking.id}">
+                                        View Details
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-outline-danger btn-sm result-delete-btn"
+                                            th:attr="data-result-id=${ranking.id}">
+                                        Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="glass-card panel-card h-100">
+                <div class="section-label">Skill Trends</div>
+                <h2 class="h4 mb-3">Top Matched Skills</h2>
+                <div th:if="${#lists.isEmpty(analytics.topMatchedSkills)}" class="text-secondary">
+                    No matched skills available yet.
+                </div>
+                <div th:unless="${#lists.isEmpty(analytics.topMatchedSkills)}">
+                    <div class="skill-row" th:each="skill : ${analytics.topMatchedSkills}">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="skill-pill" th:text="${skill.skill}">java</span>
+                            <span class="fw-semibold" th:text="${skill.count}">8</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-bar-fill"
+                                 th:style="'width:' + (${analytics.maxSkillFrequency > 0 ? (skill.count * 100.0 / analytics.maxSkillFrequency) : 0}) + '%'"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</th:block>
+
+<th:block th:fragment="detailsModal">
+    <div class="modal fade" id="resultDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header border-0">
+                    <div class="flex-grow-1">
+                        <div class="section-label">Ranking Details</div>
+                        <h5 class="modal-title mb-0" id="detailsModalTitle">Ranking Result</h5>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button"
+                                class="btn btn-outline-primary btn-sm"
+                                id="downloadReportBtn"
+                                disabled>
+                            Download Report
+                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="modal-body pt-0">
+                    <div id="detailsError" class="alert alert-danger d-none" role="alert"></div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3">
+                            <div class="chart-card">
+                                <div class="section-label">Score</div>
+                                <div class="metric-value" id="detailsScore">0%</div>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="chart-card h-100">
+                                <div class="section-label">Breakdown</div>
+                                <div class="text-secondary" id="detailsBreakdown">Skill: 0% | Keyword: 0% | Semantic: 0%</div>
+                                <div class="text-secondary mt-2" id="detailsDate">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-card mb-3">
+                        <div class="section-label">Matched Skills</div>
+                        <div id="detailsSkills">No matched skills</div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="section-label">Explanation</div>
+                        <div class="text-secondary" id="detailsExplanation">No explanation available.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="toastContainer">
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="resultToastContainer"></div>
+</th:block>
+
+<th:block th:fragment="chartScripts">
+<script th:inline="javascript">
+    const topSkills = /*[[${analytics.topMatchedSkills}]]*/ [];
+    const scoreDistribution = /*[[${analytics.scoreDistribution}]]*/ {
+        range0To40: 0,
+        range40To60: 0,
+        range60To80: 0,
+        range80To100: 0
+    };
+
+    if (Array.isArray(topSkills) && topSkills.length > 0) {
+        const skillLabels = topSkills.map(skill => skill.skill);
+        const skillCounts = topSkills.map(skill => skill.count);
+
+        new Chart(document.getElementById('topSkillsChart'), {
+            type: 'bar',
+            data: {
+                labels: skillLabels,
+                datasets: [{
+                    label: 'Match Frequency',
+                    data: skillCounts,
+                    backgroundColor: '#1f6feb',
+                    borderRadius: 10,
+                    maxBarThickness: 42
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    const scoreValues = [
+        Number(scoreDistribution.range0To40 || 0),
+        Number(scoreDistribution.range40To60 || 0),
+        Number(scoreDistribution.range60To80 || 0),
+        Number(scoreDistribution.range80To100 || 0)
+    ];
+
+    if (scoreValues.some(value => value > 0)) {
+        new Chart(document.getElementById('scoreDistributionChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['0-40%', '40-60%', '60-80%', '80-100%'],
+                datasets: [{
+                    data: scoreValues,
+                    backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#22c55e'],
+                    borderWidth: 0,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+    }
+</script>
+</th:block>
+
+<th:block th:fragment="actionScripts">
+<script th:inline="javascript">
+    const resultsTableBody = document.getElementById('resultsTableBody');
+    const resultApiBasePath = resultsTableBody?.dataset.resultApiBasePath || /*[[${resultApiBasePath}]]*/ '/admin/result';
+    const detailsModalElement = document.getElementById('resultDetailsModal');
+    const detailsModal = detailsModalElement ? new bootstrap.Modal(detailsModalElement) : null;
+    const detailsError = document.getElementById('detailsError');
+    const downloadReportBtn = document.getElementById('downloadReportBtn');
+    let currentRankingId = null;
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+    const csrfHeaderName = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+
+    function buildHeaders(includeJsonAccept = false) {
+        const headers = {};
+        if (includeJsonAccept) {
+            headers['Accept'] = 'application/json';
+        }
+        if (csrfToken && csrfHeaderName) {
+            headers[csrfHeaderName] = csrfToken;
+        }
+        return headers;
+    }
+
+    async function parseResponsePayload(response) {
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+            return response.json().catch(() => null);
+        }
+        const text = await response.text().catch(() => '');
+        return text ? { message: text } : null;
+    }
+
+    function showToast(message, type = 'danger') {
+        const container = document.getElementById('resultToastContainer');
+        if (!container || !message) {
+            return;
+        }
+
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = `
+            <div class="toast align-items-center text-bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        const toastElement = wrapper.firstElementChild;
+        container.appendChild(toastElement);
+
+        const toast = new bootstrap.Toast(toastElement, { delay: 3500 });
+        toast.show();
+        toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+    }
+
+    downloadReportBtn?.addEventListener('click', async () => {
+        if (!currentRankingId) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/report/${currentRankingId}`);
+            if (!response.ok) {
+                throw new Error('Failed to download report.');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `resume-screening-report-${currentRankingId}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            showToast(error.message || 'Unable to download report.');
+        }
+    });
+
+    function renderDetailSkills(skills) {
+        const container = document.getElementById('detailsSkills');
+        if (!Array.isArray(skills) || skills.length === 0) {
+            container.innerHTML = '<span class="text-secondary">No matched skills</span>';
+            return;
+        }
+
+        container.innerHTML = skills
+            .map(skill => `<span class="skill-tag">${skill}</span>`)
+            .join('');
+    }
+
+    function formatDate(dateText) {
+        if (!dateText) {
+            return '-';
+        }
+        const value = new Date(dateText);
+        return Number.isNaN(value.getTime()) ? '-' : value.toLocaleString();
+    }
+
+    async function openDetails(resultId) {
+        if (!detailsModal) {
+            return;
+        }
+
+        detailsError.classList.add('d-none');
+        detailsError.textContent = '';
+        currentRankingId = resultId;
+        if (downloadReportBtn) {
+            downloadReportBtn.disabled = true;
+        }
+        document.getElementById('detailsModalTitle').textContent = 'Loading...';
+        document.getElementById('detailsScore').textContent = '...';
+        document.getElementById('detailsBreakdown').textContent = 'Loading breakdown...';
+        document.getElementById('detailsDate').textContent = '-';
+        document.getElementById('detailsExplanation').textContent = 'Loading explanation...';
+        document.getElementById('detailsSkills').innerHTML = '<span class="text-secondary">Loading skills...</span>';
+        detailsModal.show();
+
+        try {
+            const response = await fetch(`${resultApiBasePath}/${resultId}`, {
+                credentials: 'same-origin',
+                headers: buildHeaders(true)
+            });
+            const payload = await parseResponsePayload(response);
+
+            if (!response.ok) {
+                throw new Error(payload?.message || payload?.error || `Failed to load ranking details (HTTP ${response.status}).`);
+            }
+
+            document.getElementById('detailsModalTitle').textContent = `${payload.jobTitle} - ${payload.resumeFileName}`;
+            document.getElementById('detailsScore').textContent = `${payload.score}%`;
+            document.getElementById('detailsBreakdown').textContent =
+                `Skill: ${payload.skillScore}% | Keyword: ${payload.keywordScore}% | Semantic: ${payload.semanticScore}%`;
+            document.getElementById('detailsDate').textContent = formatDate(payload.createdAt);
+            document.getElementById('detailsExplanation').textContent = payload.explanation || 'No explanation available.';
+            renderDetailSkills(payload.matchedSkills);
+            if (downloadReportBtn) {
+                downloadReportBtn.disabled = false;
+            }
+        } catch (error) {
+            detailsError.textContent = error.message || 'Unable to load details.';
+            detailsError.classList.remove('d-none');
+            document.getElementById('detailsModalTitle').textContent = 'Ranking Result';
+            document.getElementById('detailsScore').textContent = '-';
+            document.getElementById('detailsBreakdown').textContent = 'No breakdown available.';
+            document.getElementById('detailsDate').textContent = '-';
+            document.getElementById('detailsExplanation').textContent = 'Please try again.';
+            renderDetailSkills([]);
+            if (downloadReportBtn) {
+                downloadReportBtn.disabled = true;
+            }
+        }
+    }
+
+    async function deleteResult(resultId, button) {
+        const confirmed = window.confirm('Are you sure you want to delete this ranking result?');
+        if (!confirmed) {
+            return;
+        }
+
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Deleting...';
+
+        try {
+            const response = await fetch(`${resultApiBasePath}/${resultId}`, {
+                method: 'DELETE',
+                credentials: 'same-origin',
+                headers: buildHeaders(true)
+            });
+            const payload = await parseResponsePayload(response);
+
+            if (!response.ok) {
+                throw new Error(payload?.message || payload?.error || `Failed to delete ranking result (HTTP ${response.status}).`);
+            }
+
+            const row = resultsTableBody.querySelector(`tr[data-result-id="${resultId}"]`);
+            if (row) {
+                row.remove();
+            }
+
+            const remainingRows = resultsTableBody.querySelectorAll('tr[data-result-id]');
+            if (remainingRows.length === 0) {
+                resultsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-secondary py-4">No ranking results available yet.</td>
+                    </tr>
+                `;
+            }
+        } catch (error) {
+            showToast(error.message || 'Unable to delete ranking result.');
+        } finally {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    }
+
+    document.addEventListener('click', event => {
+        const detailsButton = event.target.closest('.result-details-btn');
+        if (detailsButton) {
+            openDetails(detailsButton.dataset.resultId);
+            return;
+        }
+
+        const deleteButton = event.target.closest('.result-delete-btn');
+        if (deleteButton) {
+            deleteResult(deleteButton.dataset.resultId, deleteButton);
+        }
+    });
+</script>
+</th:block>

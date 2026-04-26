@@ -56,7 +56,7 @@ public class PersistenceQueryService {
     }
 
     public List<RankingResultSummary> getRankingHistoryForUser(String username) {
-        return rankingResultRepository.findByOwnerUsernameOrderByCreatedAtDesc(username).stream()
+        return rankingResultRepository.findByOwner_UsernameOrderByCreatedAtDesc(username).stream()
                 .map(this::mapRankingResult)
                 .toList();
     }
@@ -68,7 +68,7 @@ public class PersistenceQueryService {
     }
 
     public List<RankingResultSummary> getRankingHistoryForUserAndJob(String username, Long jobDescriptionId) {
-        return rankingResultRepository.findByOwnerUsernameAndJobDescriptionIdOrderByScoreDesc(username, jobDescriptionId).stream()
+        return rankingResultRepository.findByOwner_UsernameAndJobDescriptionIdOrderByScoreDesc(username, jobDescriptionId).stream()
                 .map(this::mapRankingResult)
                 .toList();
     }
@@ -76,7 +76,7 @@ public class PersistenceQueryService {
     public List<AnalysisHistoryRow> getHistoryRows(boolean isAdmin, String username) {
         List<RankingResult> source = isAdmin
                 ? rankingResultRepository.findAllByOrderByCreatedAtDesc()
-                : rankingResultRepository.findByOwnerUsernameOrderByCreatedAtDesc(username);
+                : rankingResultRepository.findByOwner_UsernameOrderByCreatedAtDesc(username);
 
         Map<Long, List<RankingResult>> groupedByJob = source.stream()
                 .filter(r -> r.getJobDescription() != null && r.getJobDescription().getId() != null)
@@ -91,7 +91,7 @@ public class PersistenceQueryService {
     public Optional<AnalysisResult> buildAnalysisResultForJobId(Long jobDescriptionId, boolean isAdmin, String username) {
         List<RankingResult> rankingResults = isAdmin
                 ? rankingResultRepository.findByJobDescriptionIdOrderByScoreDesc(jobDescriptionId)
-                : rankingResultRepository.findByOwnerUsernameAndJobDescriptionIdOrderByScoreDesc(username, jobDescriptionId);
+                : rankingResultRepository.findByOwner_UsernameAndJobDescriptionIdOrderByScoreDesc(username, jobDescriptionId);
 
         if (rankingResults == null || rankingResults.isEmpty()) {
             return Optional.empty();

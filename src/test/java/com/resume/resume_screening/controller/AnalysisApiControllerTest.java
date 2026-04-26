@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,6 +30,7 @@ class AnalysisApiControllerTest {
     private ResumeAnalysisService resumeAnalysisService;
 
     @Test
+    @WithMockUser(roles = "RECRUITER")
     void analyzeReturnsJsonPayload() throws Exception {
         AnalysisResult.ResumeInsight resume1 = new AnalysisResult.ResumeInsight(
                 1,
@@ -64,7 +67,8 @@ class AnalysisApiControllerTest {
                         .file(file1)
                         .file(file2)
                         .param("jobTitle", "Java Developer")
-                        .param("jobDesc", "Spring Boot role"))
+                        .param("jobDesc", "Spring Boot role")
+                        .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.best").value("resume1.txt is the best match"))
                 .andExpect(jsonPath("$.totalResumes").value(2))

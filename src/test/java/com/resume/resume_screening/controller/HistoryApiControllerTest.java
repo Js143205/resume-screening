@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -25,6 +26,7 @@ class HistoryApiControllerTest {
     private PersistenceQueryService persistenceQueryService;
 
     @Test
+    @WithMockUser(roles = "RECRUITER")
     void getJobsReturnsStoredJobs() throws Exception {
         given(persistenceQueryService.getJobs()).willReturn(List.of(
                 new PersistenceQueryService.JobSummary(1L, "Backend Developer", "Spring Boot + MySQL", LocalDateTime.of(2026, 3, 26, 1, 0))

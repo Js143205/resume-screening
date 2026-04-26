@@ -23,8 +23,9 @@ public class SecurityConfig {
     @Bean
     AuthenticationSuccessHandler roleBasedSuccessHandler() {
         return (request, response, authentication) -> {
-            boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
-            response.sendRedirect(isAdmin ? "/admin" : "/");
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+            response.sendRedirect(isAdmin ? "/admin" : "/recruiter");
         };
     }
 
@@ -32,23 +33,18 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationSuccessHandler roleBasedSuccessHandler) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/signup", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
-
-                        // Admin-only
+                        .requestMatchers("/login", "/signup", "/forgot-password", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-
-                        // Recruiter + Admin (main flow + history APIs)
-                        .requestMatchers("/", "/result", "/analyze").hasAnyRole("RECRUITER", "ADMIN")
+                        .requestMatchers("/", "/result", "/analyze", "/recruiter", "/recruiter/**").hasAnyRole("RECRUITER", "ADMIN")
                         .requestMatchers("/api/**").hasAnyRole("RECRUITER", "ADMIN")
-
                         .anyRequest().authenticated()
                 )
-                // The UI uses fetch() calls for /api/* and a DELETE under /admin/result/*.
-                // Keeping CSRF enabled for form login while ignoring it for these JSON endpoints keeps changes minimal.
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/api/**")
                         .ignoringRequestMatchers("/admin/result/**")
+                        .ignoringRequestMatchers("/recruiter/result/**")
                         .ignoringRequestMatchers(request -> HttpMethod.DELETE.matches(request.getMethod()) && request.getRequestURI().startsWith("/admin/result/"))
+                        .ignoringRequestMatchers(request -> HttpMethod.DELETE.matches(request.getMethod()) && request.getRequestURI().startsWith("/recruiter/result/"))
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
@@ -64,4 +60,3 @@ public class SecurityConfig {
         return http.build();
     }
 }
-

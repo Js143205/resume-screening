@@ -1,6 +1,6 @@
 package com.resume.resume_screening.controller;
 
-import com.resume.resume_screening.service.AdminDashboardService;
+import com.resume.resume_screening.service.RecruiterDashboardService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -20,51 +20,51 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
-@WebMvcTest(AdminController.class)
-class AdminControllerTest {
+@WebMvcTest(RecruiterController.class)
+class RecruiterControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
-    private AdminDashboardService adminDashboardService;
+    private RecruiterDashboardService recruiterDashboardService;
 
     @Test
-    @WithMockUser(roles = "ADMIN")
-    void adminDashboardRendersWithMetrics() throws Exception {
-        AdminDashboardService.AdminDashboardData dashboardData = new AdminDashboardService.AdminDashboardData(
+    @WithMockUser(username = "recruiter", roles = "RECRUITER")
+    void recruiterDashboardRendersWithMetrics() throws Exception {
+        RecruiterDashboardService.RecruiterDashboardData dashboardData = new RecruiterDashboardService.RecruiterDashboardData(
                 12,
                 5,
                 76.4,
-                List.of(new AdminDashboardService.RecentRankingRow(
+                List.of(new RecruiterDashboardService.RecentRankingRow(
                         101L,
                         "Java Backend Engineer",
                         "resume1.pdf",
                         82,
                         LocalDateTime.of(2026, 4, 16, 10, 30)
                 )),
-                List.of(new AdminDashboardService.SkillFrequency("java", 8)),
+                List.of(new RecruiterDashboardService.SkillFrequency("java", 8)),
                 8,
-                new AdminDashboardService.ScoreDistribution(1, 2, 3, 4)
+                new RecruiterDashboardService.ScoreDistribution(1, 2, 3, 4)
         );
 
-        given(adminDashboardService.getDashboardData()).willReturn(dashboardData);
+        given(recruiterDashboardService.getDashboardData("recruiter")).willReturn(dashboardData);
 
-        mockMvc.perform(get("/admin"))
+        mockMvc.perform(get("/recruiter"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("admin"))
-                .andExpect(model().attributeExists("dashboard"))
-                .andExpect(model().attribute("resultApiBasePath", "/admin/result"))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Resume Screening Admin Dashboard")))
+                .andExpect(view().name("recruiter"))
+                .andExpect(model().attributeExists("analytics"))
+                .andExpect(model().attribute("resultApiBasePath", "/recruiter/result"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Resume Screening Dashboard")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Java Backend Engineer")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("resume1.pdf")));
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
-    void adminResultEndpointsReturnDetailsAndAllowDelete() throws Exception {
-        given(adminDashboardService.getRankingResultDetails(101L))
-                .willReturn(new AdminDashboardService.RankingResultDetails(
+    @WithMockUser(username = "recruiter", roles = "RECRUITER")
+    void recruiterResultEndpointsReturnDetailsAndAllowDelete() throws Exception {
+        given(recruiterDashboardService.getRankingResultDetails("recruiter", 101L))
+                .willReturn(new RecruiterDashboardService.RankingResultDetails(
                         101L,
                         "Java Backend Engineer",
                         "resume1.pdf",
@@ -76,15 +76,15 @@ class AdminControllerTest {
                         "Good profile.",
                         LocalDateTime.of(2026, 4, 16, 10, 30)
                 ));
-        given(adminDashboardService.deleteRankingResult(101L))
-                .willReturn(new AdminDashboardService.DeleteResultResponse(101L, "Ranking result deleted successfully."));
+        given(recruiterDashboardService.deleteRankingResult("recruiter", 101L))
+                .willReturn(new RecruiterDashboardService.DeleteResultResponse(101L, "Ranking result deleted successfully."));
 
-        mockMvc.perform(get("/admin/result/101"))
+        mockMvc.perform(get("/recruiter/result/101"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("\"id\":101")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("\"resumeFileName\":\"resume1.pdf\"")));
 
-        mockMvc.perform(delete("/admin/result/101").with(csrf()))
+        mockMvc.perform(delete("/recruiter/result/101").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Ranking result deleted successfully.")));
     }

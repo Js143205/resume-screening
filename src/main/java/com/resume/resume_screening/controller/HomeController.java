@@ -36,7 +36,8 @@ public class HomeController {
     }
 
     @GetMapping("/")
-    public String home() {
+    public String home(Model model) {
+        model.addAttribute("activePage", "home");
         return "index";
     }
 
@@ -83,6 +84,7 @@ public class HomeController {
     public String history(Model model, Authentication authentication) {
         boolean isAdmin = hasRole(authentication, "ROLE_ADMIN");
         String username = authentication != null ? authentication.getName() : null;
+        model.addAttribute("activePage", "history");
         model.addAttribute("analyses", persistenceQueryService.getHistoryRows(isAdmin, username));
         return "history";
     }
