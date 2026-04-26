@@ -1,0 +1,22 @@
+<!-- Sidebar Fragment -->
+<div id="sidebar" class="d-flex flex-column flex-shrink-0 p-3 border-end bg-white" style="width: 240px; min-height: 100vh;">
+  <a href="/" class="d-flex align-items-center mb-3 text-decoration-none text-dark">
+    <span class="fs-5 fw-bold">ResuScore AI</span>
+  </a>
+  <div class="text-uppercase small fw-semibold text-secondary mb-2">Navigation</div>
+  <hr class="mt-1 mb-3">
+  <ul class="nav nav-pills flex-column mb-auto">
+    <li class="nav-item">
+      <a href="/" class="nav-link rounded-3 px-3 py-2 text-secondary d-flex align-items-center fw-medium"
+         th:classappend="${#httpServletRequest.requestURI == '/'} ? ' active bg-primary-subtle text-primary-emphasis shadow-sm'">
+        <i class="bi bi-house-door me-2"></i> Dashboard
+      </a>
+    </li>
+    <li>
+      <a href="/history" class="nav-link rounded-3 px-3 py-2 text-secondary d-flex align-items-center fw-medium"
+         th:classappend="${#httpServletRequest.requestURI == '/history'} ? ' active bg-primary-subtle text-primary-emphasis shadow-sm'">
+        <i class="bi bi-clock-history me-2"></i> History
+      </a>
+    </li>
+  </ul>
+</div>

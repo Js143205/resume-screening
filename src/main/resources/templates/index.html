@@ -1,47 +1,631 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
 <head>
-    <title>Resume Screening</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Resume Screening Control Center</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <style>
+        :root {
+            --primary: #2563eb;
+            --bg-1: #f8fafc;
+            --bg-2: #eef4fb;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent-soft: rgba(37, 99, 235, 0.08);
+            --success: #16a34a;
+            --warning: #d4a72c;
+            --danger: #dc2626;
+            --border: #e5e7eb;
+            --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+        }
+
         body {
-            font-family: Arial;
-            text-align: center;
-            background-color: #f4f4f4;
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 32%),
+                linear-gradient(180deg, var(--bg-1), var(--bg-2));
+            color: var(--text-main);
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         }
-        form {
-            background: white;
-            padding: 20px;
-            margin: auto;
-            width: 300px;
-            border-radius: 10px;
+
+        .page-shell {
+            max-width: 1380px;
+            margin: 0 auto;
+            padding: 2.5rem 1rem 3rem;
         }
-        button {
-            padding: 10px;
-            background: #007BFF;
-            color: white;
+
+        .glass-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .hero-card,
+        .panel-card {
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .panel-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 24px 58px rgba(32, 63, 95, 0.15);
+        }
+
+        .hero-card {
+            padding: 2rem;
+        }
+
+        .panel-card {
+            padding: 1.5rem;
+            height: 100%;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.4rem 0.85rem;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .section-label {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+        }
+
+        .drop-zone {
+            position: relative;
+            border: 1.5px dashed rgba(37, 99, 235, 0.3);
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(37, 99, 235, 0.05), rgba(37, 99, 235, 0.02));
+            padding: 1.25rem;
+            transition: border-color 0.2s ease, background 0.2s ease;
+        }
+
+        .drop-zone:hover,
+        .drop-zone:focus-within {
+            border-color: rgba(37, 99, 235, 0.55);
+            background: linear-gradient(180deg, rgba(37, 99, 235, 0.09), rgba(37, 99, 235, 0.04));
+        }
+
+        .drop-zone input[type="file"] {
+            width: 100%;
+        }
+
+        .metric-card {
+            padding: 1rem 1.1rem;
+            border-radius: 18px;
+            background: #f8fbfe;
+            border: 1px solid rgba(23, 50, 77, 0.06);
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.3rem 0.7rem;
+            border-radius: 999px;
+            color: #fff;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .status-good { background: var(--success); }
+        .status-mid { background: var(--warning); }
+        .status-low { background: var(--danger); }
+
+        .skill-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.38rem 0.75rem;
+            border-radius: 999px;
+            background: rgba(31, 111, 235, 0.09);
+            color: var(--accent);
+            font-size: 0.84rem;
+            font-weight: 700;
+            margin: 0 0.45rem 0.45rem 0;
+        }
+
+        .table-shell {
+            overflow: auto;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+        }
+
+        .table thead th {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            background: #f8fafc;
+        }
+
+        .subtle-box {
+            background: #f8fafc;
+            border-radius: 18px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .preview-panel {
+            display: none;
+        }
+
+        .preview-panel.active {
+            display: block;
+        }
+
+        .form-control,
+        .form-control:focus {
+            border-radius: 14px;
+            box-shadow: none;
+        }
+
+        .btn-primary {
+            border-radius: 999px;
+            padding-inline: 1.35rem;
+            font-weight: 700;
+            background-color: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+        }
+
+        .btn-outline-secondary {
+            border-radius: 999px;
+        }
+
+        .table td,
+        .table th {
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+        }
+
+        #fileList .list-group-item {
             border: none;
-            border-radius: 5px;
+            border-bottom: 1px solid var(--border);
+            padding-left: 0;
+            padding-right: 0;
+            background: transparent;
+        }
+
+        #fileList .list-group-item:last-child {
+            border-bottom: 0;
+        }
+
+        .small-muted {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 991.98px) {
+            .hero-card {
+                padding: 1.5rem;
+            }
         }
     </style>
 </head>
 <body>
+<div class="page-shell">
+    <div th:replace="~{fragments/navbar :: body}"></div>
 
-<h2>Resume Screening System</h2>
+    <div class="alert alert-warning rounded-4"
+         sec:authorize="hasRole('ADMIN')"
+         role="alert">
+        <span class="fw-semibold">You are viewing Recruiter mode.</span>
+        Admin privileges still apply, but this page shows the recruiter workflow.
+    </div>
 
-<form action="/analyze" method="post" enctype="multipart/form-data">
+    <section class="glass-card hero-card mb-4">
+        <span class="eyebrow">Dashboard</span>
+        <h1 class="display-6 fw-bold mt-3 mb-3">Welcome to Resume Screening & Ranking System</h1>
+        <p class="lead mb-3">
+            Upload a job description and up to 10 resumes to start a new analysis. View your recent history below.
+        </p>
+    </section>
 
-    <label>Upload Resume 1</label><br>
-    <input type="file" name="file1"><br><br>
+    <section class="row g-4">
+        <div class="col-xl-6">
+            <div class="glass-card panel-card">
+                <div class="section-label">New Screening Analysis</div>
+                <form id="analysisForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Job Title</label>
+                        <input class="form-control" type="text" name="jobTitle" placeholder="e.g. Frontend Developer" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Job Description</label>
+                        <textarea class="form-control" name="jobDesc" rows="5" placeholder="Paste job description here..." required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Upload Resumes</label>
+                        <div class="drop-zone">
+                            <input class="form-control" type="file" name="files" accept=".pdf,.doc,.docx,.txt" multiple required>
+                            <div class="small-muted mt-2">Drag & drop files (up to 10) or <span class="text-primary fw-semibold">browse</span>. Supported: PDF, DOC, DOCX, TXT.</div>
+                        </div>
+                        <div id="fileList" class="mt-2"></div>
+                        <div id="fileCounter" class="small text-muted mt-1">Files uploaded: 0 / 10</div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-3 align-items-center">
+                        <button type="submit" id="analyzeBtn" class="btn btn-primary px-4">
+                            <span id="btnText">Run Analysis</span>
+                             <span id="btnSpinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
+</button>
+                        <span id="statusText" class="small-muted">Ready for analysis</span>
+                        
+                    </div>
+                    
+                </form>
+            </div>
+        </div>
+        <div class="col-xl-6">
+            <div class="glass-card panel-card h-100">
+                <div class="section-label">Recent History</div>
+                <div class="table-shell">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>Job Title</th>
+                        <th>Date</th>
+                        <th>Resumes</th>
+                        <th>Top Score</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                    <tr><td colspan="5" class="text-center small-muted py-5">No history yet.</td></tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <label>Upload Resume 2</label><br>
-    <input type="file" name="file2"><br><br>
+    <section class="row g-4 mt-1">
+        <div class="col-xl-5">
+            <div class="glass-card panel-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <div class="section-label">Database History</div>
+                        <h2 class="h4 mb-0">Recent Jobs</h2>
+                    </div>
+                    <button id="refreshJobs" class="btn btn-outline-secondary btn-sm">Refresh</button>
+                </div>
+                <div class="table-shell">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Created</th>
+                        </tr>
+                        </thead>
+                        <tbody id="jobsTableBody">
+                        <tr><td colspan="2" class="text-center small-muted py-4">Loading jobs...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-    <label>Job Description</label><br>
-    <textarea name="jobDesc" rows="4"></textarea><br><br>
+        <div class="col-xl-7">
+            <div class="glass-card panel-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <div class="section-label">Database History</div>
+                        <h2 class="h4 mb-0">Recent Ranking Results</h2>
+                    </div>
+                    <button id="refreshRankings" class="btn btn-outline-secondary btn-sm">Refresh</button>
+                </div>
+                <div class="table-shell">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>Job</th>
+                            <th>Resume</th>
+                            <th>Score</th>
+                            <th>Breakdown</th>
+                            <th>Created</th>
+                        </tr>
+                        </thead>
+                        <tbody id="rankingsTableBody">
+                        <tr><td colspan="5" class="text-center small-muted py-4">Loading ranking history...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
 
-    <button type="submit">Analyze</button>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('analysisForm');
+    const submitButton = document.getElementById('analyzeBtn');
+    const statusText = document.getElementById('statusText');
+    const jobsTableBody = document.getElementById('jobsTableBody');
+    const rankingsTableBody = document.getElementById('rankingsTableBody');
+    const historyTableBody = document.getElementById('historyTableBody');
+    const fileInput = form ? form.querySelector('input[type="file"]') : null;
+    const fileList = document.getElementById('fileList');
+    const fileCounter = document.getElementById('fileCounter');
+    const MAX_FILES = 10;
 
-</form>
+    if (!fileInput || !fileList || !fileCounter) {
+        console.warn("File upload elements not found in DOM");
+    }
 
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    function updateFileList() {
+        if (!fileInput || !fileList || !fileCounter) return;
+        
+        const files = fileInput.files;
+        if (files.length === 0) {
+            fileList.innerHTML = '';
+            fileCounter.textContent = 'Files uploaded: 0 / 10';
+            return;
+        }
+
+        fileCounter.textContent = 'Files uploaded: ' + files.length + ' / ' + MAX_FILES;
+
+        if (files.length > MAX_FILES) {
+            fileCounter.classList.add('text-danger');
+            fileList.innerHTML = '<div class="alert alert-warning py-2 px-3 mb-0">Maximum ' + MAX_FILES + ' files allowed. Please remove some files.</div>';
+            return;
+        } else {
+            fileCounter.classList.remove('text-danger');
+        }
+
+        let html = '<ul class="list-group list-group-flush">';
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            html += '<li class="list-group-item d-flex justify-content-between align-items-center py-2">';
+            html += '<span><i class="bi bi-file-earmark-text me-2"></i>' + file.name + '</span>';
+            html += '<span class="badge bg-secondary-subtle text-dark">' + formatFileSize(file.size) + '</span>';
+            html += '</li>';
+        }
+        html += '</ul>';
+        fileList.innerHTML = html;
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            updateFileList();
+        });
+    }
+
+    // Drag and drop visual feedback
+    const dropZone = fileInput ? fileInput.closest('.drop-zone') : null;
+    if (dropZone) {
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            dropZone.classList.add('border-primary', 'bg-light');
+        });
+        dropZone.addEventListener('dragleave', function() {
+            dropZone.classList.remove('border-primary', 'bg-light');
+        });
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            dropZone.classList.remove('border-primary', 'bg-light');
+        });
+    }
+
+    const previewPanel = document.getElementById('previewPanel');
+
+    
+    function scoreClass(score) {
+        if (score >= 80) return 'status-good';
+        if (score >= 50) return 'status-mid';
+        return 'status-low';
+    }
+
+    function scoreLabel(score) {
+        if (score >= 80) return 'Strong Match';
+        if (score >= 50) return 'Moderate Match';
+        return 'Low Match';
+    }
+
+    function escapeHtml(text) {
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function renderSkills(containerId, skills) {
+        const container = document.getElementById(containerId);
+        if (!skills || skills.length === 0) {
+            container.innerHTML = '<span class="skill-chip">No matched skills</span>';
+            return;
+        }
+
+        container.innerHTML = skills
+            .map(skill => `<span class="skill-chip">${escapeHtml(skill)}</span>`)
+            .join('');
+    }
+
+    
+    async function loadJobs() {
+        if (!jobsTableBody) return;
+        jobsTableBody.innerHTML = '<tr><td colspan="2" class="text-center small-muted py-4">Loading jobs...</td></tr>';
+        try {
+            const response = await fetch('/api/jobs');
+            const jobs = await response.json();
+
+            if (!jobs.length) {
+                jobsTableBody.innerHTML = '<tr><td colspan="2" class="text-center small-muted py-4">No jobs stored yet.</td></tr>';
+                return;
+            }
+
+            jobsTableBody.innerHTML = jobs.slice(0, 6).map(job => `
+                <tr>
+                    <td>
+                        <div class="fw-semibold">${escapeHtml(job.title)}</div>
+                        <div class="small-muted text-truncate" style="max-width: 320px;">${escapeHtml((job.description || '').slice(0, 90))}</div>
+                    </td>
+                    <td>${job.createdAt ? new Date(job.createdAt).toLocaleString() : '-'}</td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            jobsTableBody.innerHTML = '<tr><td colspan="2" class="text-center text-danger py-4">Failed to load jobs.</td></tr>';
+        }
+    }
+
+    async function loadRecentHistory() {
+        if (!historyTableBody) return;
+        historyTableBody.innerHTML = '<tr><td colspan="5" class="text-center small-muted py-4">Loading history...</td></tr>';
+        try {
+            const response = await fetch('/api/my-results');
+            const rankings = await response.json();
+
+            if (!Array.isArray(rankings) || rankings.length === 0) {
+                historyTableBody.innerHTML = '<tr><td colspan="5" class="text-center small-muted py-5">No history yet.</td></tr>';
+                return;
+            }
+
+            const byJob = new Map();
+            rankings.forEach(item => {
+                const key = item.jobDescriptionId ?? item.jobTitle ?? 'unknown';
+                const existing = byJob.get(key);
+                const createdTs = item.createdAt ? new Date(item.createdAt).getTime() : 0;
+                const score = Number(item.score || 0);
+                if (!existing) {
+                    byJob.set(key, {
+                        id: item.jobDescriptionId,
+                        jobTitle: item.jobTitle || 'Untitled Job',
+                        dateTs: createdTs,
+                        dateText: item.createdAt ? new Date(item.createdAt).toLocaleString() : '-',
+                        resumes: 1,
+                        topScore: score
+                    });
+                } else {
+                    existing.resumes += 1;
+                    existing.topScore = Math.max(existing.topScore, score);
+                    if (createdTs > existing.dateTs) {
+                        existing.dateTs = createdTs;
+                        existing.dateText = item.createdAt ? new Date(item.createdAt).toLocaleString() : existing.dateText;
+                    }
+                }
+            });
+
+            const rows = Array.from(byJob.values())
+                .sort((a, b) => b.dateTs - a.dateTs)
+                .slice(0, 6);
+
+            historyTableBody.innerHTML = rows.map(row => `
+                <tr>
+                    <td>${escapeHtml(row.jobTitle)}</td>
+                    <td>${row.dateText}</td>
+                    <td>${row.resumes}</td>
+                    <td><span class="fw-semibold">${Math.round(row.topScore)}%</span></td>
+                    <td>${row.id ? `<a class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold" href="/result?id=${row.id}">View</a>` : '-'}</td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            historyTableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Failed to load history.</td></tr>';
+        }
+    }
+
+    async function loadRankings() {
+        if (!rankingsTableBody) return;
+        rankingsTableBody.innerHTML = '<tr><td colspan="4" class="text-center small-muted py-4">Loading ranking history...</td></tr>';
+        try {
+            const response = await fetch('/api/my-results');
+            const rankings = await response.json();
+
+            if (!rankings.length) {
+                rankingsTableBody.innerHTML = '<tr><td colspan="5" class="text-center small-muted py-4">No ranking history available yet.</td></tr>';
+                return;
+            }
+
+            rankingsTableBody.innerHTML = rankings.slice(0, 8).map(item => `
+                <tr>
+                    <td>${escapeHtml(item.jobTitle || 'Untitled Job')}</td>
+                    <td>${escapeHtml(item.resumeFileName || 'Resume')}</td>
+                    <td><span class="fw-bold">${Math.round(item.score)}%</span></td>
+                    <td>
+                        <div class="small-muted">S: ${Math.round(item.skillScore)} | K: ${Math.round(item.keywordScore)} | M: ${Math.round(item.semanticScore)}</div>
+                        <div class="small-muted">${item.matchedSkillCount || 0} matched skill(s)</div>
+                    </td>
+                    <td>${item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}</td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            rankingsTableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Failed to load ranking history.</td></tr>';
+        }
+    }
+
+    if (form) form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const btn = document.getElementById("analyzeBtn");
+        const text = document.getElementById("btnText");
+        const spinner = document.getElementById("btnSpinner");
+
+        btn.disabled = true;
+        text.innerText = "Analyzing...";
+        spinner.classList.remove("d-none");
+
+        statusText.textContent = 'Analyzing resumes through REST API...';
+
+        const formData = new FormData(form);
+        const jobTitle = formData.get('jobTitle');
+
+        try {
+            const response = await fetch('/api/analyze', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                throw new Error(errorData?.message || 'Analysis request failed');
+            }
+
+            const data = await response.json();
+            window.location.href = "/result";
+            statusText.textContent = 'Analysis completed successfully.';
+            await Promise.all([loadJobs(), loadRankings()]);
+        } catch (error) {
+            statusText.textContent = error.message || 'Analysis failed. Please check files and try again.';
+        } finally {
+            btn.disabled = false;
+            text.innerText = "Run Analysis";
+            spinner.classList.add("d-none");
+        }
+    });
+
+    const refreshJobs = document.getElementById('refreshJobs');
+    const refreshRankings = document.getElementById('refreshRankings');
+    if (refreshJobs) refreshJobs.addEventListener('click', loadJobs);
+    if (refreshRankings) refreshRankings.addEventListener('click', loadRankings);
+
+    loadJobs();
+    loadRankings();
+    loadRecentHistory();
+});
+</script>
 </body>
 </html>
